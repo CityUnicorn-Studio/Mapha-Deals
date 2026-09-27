@@ -59,7 +59,9 @@
     .section-title { font-size: 1.1rem; font-weight: 700; margin: 16px 16px 12px; }
     .deal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 0 16px; }
 
-    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; transition: transform 0.2s, border-color 0.2s; }
+    .card.clickable { cursor: pointer; }
+    .card.clickable:hover { border-color: var(--primary); transform: translateY(-2px); }
     .discount-badge { position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; z-index: 2; }
     .card-img { width: 100%; height: 140px; object-fit: cover; background: #21262d; display: block; }
     .card-body { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
@@ -67,9 +69,10 @@
     .tag { font-size: 0.7rem; background: var(--badge-bg); color: var(--text-muted); padding: 2px 8px; border-radius: 4px; }
     .card-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); line-height: 1.3; }
     .merchant { font-size: 0.8rem; color: var(--text-muted); }
-    .price-row { display: flex; align-items: baseline; gap: 8px; margin-top: auto; padding-top: 8px; }
+    .price-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: auto; padding-top: 8px; }
     .current-price { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
     .old-price { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
+    .info-btn { font-size: 0.75rem; color: #3b82f6; font-weight: 600; background: #1e3a8a33; border: 1px solid #3b82f6; padding: 2px 6px; border-radius: 4px; }
 
     /* Map View Styling */
     .map-controls {
@@ -175,8 +178,11 @@
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: #21262d; border: 1px solid var(--card-border); border-radius: 6px; color: #fff; font-size: 0.85rem; }
-    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-weight: 700; margin-top: 8px; cursor: pointer; }
+    .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-weight: 700; margin-top: 8px; cursor: pointer; text-align: center; text-decoration: none; display: inline-block; }
     .btn-secondary { background: #30363d; color: var(--text-main); padding: 6px 12px; border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+    
+    .info-list { margin: 12px 0; padding-left: 20px; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+    .info-list li { margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -389,6 +395,40 @@
     </div>
   </div>
 
+  <!-- Game Student Card Guidance Modal -->
+  <div class="modal" id="guideModal" onclick="handleGuideBackdropClick(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="guideTitle">Game Stores Student Discount Guide</h3>
+        <button class="close-btn" onclick="toggleGuideModal(false)">&times;</button>
+      </div>
+      <p style="font-size:0.85rem; color: var(--text-muted); line-height: 1.4;" id="guideSub">
+        To claim your 10% discount every Monday, you must apply for an official <strong>Game Student Card</strong> in-store.
+      </p>
+      
+      <div style="margin-top: 14px;">
+        <strong style="font-size: 0.9rem; color: var(--primary);">How to Get Your Card In-Store:</strong>
+        <ol class="info-list" id="guideStepsList">
+          <li>Visit the <strong>Customer Service Desk</strong> at any Game store nationwide.</li>
+          <li>Bring a copy of your <strong>ID or Passport</strong>.</li>
+          <li>Bring your current <strong>Tertiary Student Card</strong> / Proof of Registration.</li>
+          <li>Complete the short application form to receive your physical Game Student Card.</li>
+        </ol>
+      </div>
+
+      <div style="background: #1f2937; border-left: 4px solid #ef4444; padding: 10px 12px; border-radius: 6px; margin-bottom: 16px;">
+        <strong style="font-size: 0.8rem; color: #fff;">Key Discount Terms:</strong>
+        <ul style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; padding-left: 16px;">
+          <li>Applies up to a maximum spend of <strong>R3,000</strong> per purchase.</li>
+          <li>In-store purchases only (excludes online & third-party delivery).</li>
+          <li>Excludes markdowns, cellular contracts, and financial services.</li>
+        </ul>
+      </div>
+
+      <a id="guideTcBtn" href="#" target="_blank" class="submit-btn" style="background: #3b82f6;">View Official Game T&Cs Page ➔</a>
+    </div>
+  </div>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -405,18 +445,19 @@
     const deals = [
       {
         id: 1,
-        title: "10% Student Discount Every Monday (In-Store)",
-        merchant: "Game Stores - Greenacres",
+        title: "10% Off In-Store Purchases Every Monday",
+        merchant: "Game Stores (In-Store)",
         category: "Tech",
-        province: "EC",
-        campus: "NMU",
-        city: "Gqeberha",
+        province: "All",
+        campus: "All",
+        city: "Nationwide",
         price: "10% OFF",
-        oldPrice: "Mondays Only",
+        oldPrice: "Up to R3,000 spend",
         discount: "-10%",
-        lat: -33.9515,
-        lng: 25.5901,
-        img: "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500"
+        lat: null, lng: null,
+        img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500",
+        tcLink: "https://www.game.co.za/s/student-discount-tcs/?srsltid=AU7gw4X-UMS3wP-JhK_SnJZD-A2f2ZnqFJxvK5THqaFYBo99visamE9F",
+        hasGuide: true
       },
       {
         id: 2,
@@ -505,20 +546,6 @@
         discount: "-5%",
         lat: null, lng: null,
         img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500"
-      },
-      {
-        id: 8,
-        title: "10% Discount In-Store (Mondays)",
-        merchant: "Game Stores Nationwide",
-        category: "Tech",
-        province: "All",
-        campus: "All",
-        city: "Nationwide",
-        price: "10% OFF",
-        oldPrice: "Up to R3,000",
-        discount: "-10%",
-        lat: null, lng: null,
-        img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500"
       },
       {
         id: 9,
@@ -912,8 +939,12 @@
             }
         }
 
+        const isClickable = deal.hasGuide || deal.tcLink;
+        const clickAttr = isClickable ? `onclick="openDealGuide(${deal.id})"` : '';
+        const clickableClass = isClickable ? 'clickable' : '';
+
         return `
-          <div class="card">
+          <div class="card ${clickableClass}" ${clickAttr}>
             ${badgeHTML}
             <img class="card-img" src="${deal.img || fallbackImg}" alt="${deal.title}" onerror="this.onerror=null;this.src='${fallbackImg}';">
             <div class="card-body">
@@ -926,6 +957,7 @@
               <div class="price-row">
                 <span class="current-price">${displayPrice}</span>
                 ${displayOldPrice ? `<span class="old-price">${displayOldPrice}</span>` : ''}
+                ${deal.hasGuide ? `<span class="info-btn">How To Get ➔</span>` : ''}
               </div>
             </div>
           </div>
@@ -961,6 +993,24 @@
 
     function handleBackdropClick(e) {
       if (e.target.id === 'postModal') toggleModal(false);
+    }
+
+    function openDealGuide(id) {
+      const deal = deals.find(d => d.id === id);
+      if (!deal) return;
+
+      if (deal.tcLink) {
+        document.getElementById('guideTcBtn').href = deal.tcLink;
+      }
+      toggleGuideModal(true);
+    }
+
+    function toggleGuideModal(show) {
+      document.getElementById('guideModal').style.display = show ? 'flex' : 'none';
+    }
+
+    function handleGuideBackdropClick(e) {
+      if (e.target.id === 'guideModal') toggleGuideModal(false);
     }
 
     function handleFormSubmit(e) {
