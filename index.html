@@ -313,9 +313,6 @@
         <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
           <strong>Your Rights:</strong> You can delete all your saved data at any time by clearing your browser's site data or by clicking "Logout" in the Student Hub. 
         </p>
-        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
-          <strong>Contact Us:</strong> If you have any questions about your privacy, please contact us via WhatsApp at <a href="https://wa.me/27698440391" style="color: var(--primary); text-decoration: none;">+27 69 844 0391</a>.
-        </p>
       </div>
 
     </div>
@@ -386,36 +383,32 @@
           <label>Original Price (R)</label>
           <input type="number" id="dealOldPrice" required placeholder="50">
         </div>
-        <div class="form-group">
-          <label>Image URL (Optional)</label>
-          <input type="url" id="dealImage" placeholder="https://example.com/image.jpg">
-        </div>
         <button type="submit" class="submit-btn">Submit & Pay R50 via WhatsApp</button>
       </form>
     </div>
   </div>
 
   <!-- Game Student Card Guidance Modal -->
-<div class="modal" id="guideModal" onclick="handleGuideBackdropClick(event)">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3 id="guideTitle">Game Stores Student Discount Guide</h3>
-      <button class="close-btn" onclick="toggleGuideModal(false)">&times;</button>
-    </div>
-    <p style="font-size:0.85rem; color: var(--text-muted); line-height: 1.4;" id="guideSub">
-      To claim your 10% discount every Monday, you must apply for an official <strong>Game Student Card</strong> in-store.
-    </p>
+  <div class="modal" id="guideModal" onclick="handleGuideBackdropClick(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="guideTitle">Game Stores Student Discount Guide</h3>
+        <button class="close-btn" onclick="toggleGuideModal(false)">&times;</button>
+      </div>
+      <p style="font-size:0.85rem; color: var(--text-muted); line-height: 1.4;" id="guideSub">
+        To claim your 10% discount every Monday, you must apply for an official <strong>Game Student Card</strong> in-store.
+      </p>
 
-    <div style="margin-top: 14px;">
-      <strong style="font-size: 0.9rem; color: var(--primary);">How to Get Your Card In-Store:</strong>
-      <ol class="info-list" id="guideStepsList">
-        <li>Visit the <strong>Customer Service Desk</strong> at any Game store nationwide.</li>
-        <li>Bring a <strong>photocopy of your ID book</strong> (or Smart ID / Passport).</li>
-        <li>Bring <strong>1x ID photo</strong> for your physical card.</li>
-        <li>Bring a copy of your <strong>Proof of Registration</strong> from your tertiary institution.</li>
-        <li>Complete the short application form in-store with staff assistance.</li>
-      </ol>
-    </div>
+      <div style="margin-top: 14px;">
+        <strong style="font-size: 0.9rem; color: var(--primary);">How to Get Your Card In-Store:</strong>
+        <ol class="info-list" id="guideStepsList">
+          <li>Visit the <strong>Customer Service Desk</strong> at any Game store nationwide.</li>
+          <li>Bring a <strong>photocopy of your ID book</strong> (or Smart ID / Passport).</li>
+          <li>Bring <strong>1x ID photo</strong> for your physical card.</li>
+          <li>Bring a copy of your <strong>Proof of Registration</strong> from your tertiary institution.</li>
+          <li>Complete the short application form in-store with staff assistance.</li>
+        </ol>
+      </div>
 
       <div style="background: #1f2937; border-left: 4px solid #ef4444; padding: 10px 12px; border-radius: 6px; margin-bottom: 16px;">
         <strong style="font-size: 0.8rem; color: #fff;">Key Discount Terms:</strong>
@@ -434,6 +427,39 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // --- HELPER: ASSEMBLY ON SUBMIT (Hides number from static scrapers) ---
+    function getWaTarget() {
+      const parts = ['27', '69', '844', '0391']; 
+      return parts.join('');
+    }
+
+    // LocalStorage Safe Helpers
+    function getStorage(key) {
+      try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : null;
+      } catch(e) {
+        console.warn('LocalStorage access blocked or unavailable:', e);
+        return null;
+      }
+    }
+
+    function setStorage(key, val) {
+      try {
+        localStorage.setItem(key, JSON.stringify(val));
+      } catch(e) {
+        console.warn('LocalStorage save failed:', e);
+      }
+    }
+
+    function removeStorage(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch(e) {
+        console.warn('LocalStorage remove failed:', e);
+      }
+    }
+
     const fallbackImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='140' viewBox='0 0 300 140'><rect width='100%' height='100%' fill='%2321262d'/><text x='50%' y='50%' fill='%238b949e' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14'>Mapha Deals</text></svg>";
 
     const campusLocations = {
@@ -443,7 +469,7 @@
       "UP": { name: "University of Pretoria (Hatfield)", province: "GP", lat: -25.7545, lng: 28.2314, zoom: 14 }
     };
 
-    const deals = [
+    const initialDeals = [
       {
         id: 1,
         title: "10% Off In-Store Purchases Every Monday",
@@ -549,7 +575,7 @@
         img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500"
       },
       {
-        id: 9,
+        id: 8,
         title: "20% - 30% Off Apparel",
         merchant: "The FIX & Cotton On",
         category: "Fashion",
@@ -563,7 +589,7 @@
         img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500"
       },
       {
-        id: 10,
+        id: 9,
         title: "10% Off In-Store (Tue-Thu)",
         merchant: "Sportscene",
         category: "Fashion",
@@ -577,7 +603,7 @@
         img: "https://images.unsplash.com/photo-1556906781-9a412961c28c?w=500"
       },
       {
-        id: 11,
+        id: 10,
         title: "10% - 15% Off Fashion",
         merchant: "H&M & G-Star (Varsity Vibe)",
         category: "Fashion",
@@ -591,7 +617,7 @@
         img: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500"
       },
       {
-        id: 12,
+        id: 11,
         title: "Exclusive Combos & Discounts",
         merchant: "Nando's, Burger King, Kauai & More",
         category: "Food",
@@ -605,7 +631,7 @@
         img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500"
       },
       {
-        id: 13,
+        id: 12,
         title: "50% Off Weekly & Monthly Fares",
         merchant: "Gautrain Student Card",
         category: "Travel",
@@ -619,7 +645,7 @@
         img: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=500"
       },
       {
-        id: 14,
+        id: 13,
         title: "5% Discount on Bus Tickets",
         merchant: "Intercape",
         category: "Travel",
@@ -633,7 +659,7 @@
         img: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500"
       },
       {
-        id: 15,
+        id: 14,
         title: "30% Off Camping & Activities",
         merchant: "SANParks",
         category: "Travel",
@@ -647,7 +673,7 @@
         img: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500"
       },
       {
-        id: 16,
+        id: 15,
         title: "10GB Data for R49/Week (Under 25)",
         merchant: "MTN Pulse",
         category: "Services",
@@ -661,7 +687,7 @@
         img: "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=500"
       },
       {
-        id: 17,
+        id: 16,
         title: "10GB + 120 Mins for R99",
         merchant: "Vodacom NXT LVL",
         category: "Services",
@@ -675,7 +701,7 @@
         img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=500"
       },
       {
-        id: 18,
+        id: 17,
         title: "50% Off Premium Streaming",
         merchant: "Spotify Student",
         category: "Services",
@@ -690,6 +716,7 @@
       }
     ];
 
+    let deals = [...initialDeals];
     let currentCategory = 'All';
     let map = null;
     let mapMarkers = [];
@@ -697,13 +724,15 @@
     // --- STUDENT HUB AUTH & PERSISTENCE ---
     function renderAuthSection() {
       const authDiv = document.getElementById('authSection');
-      const user = JSON.parse(localStorage.getItem('sd_user'));
+      if (!authDiv) return;
+
+      const user = getStorage('sd_user');
 
       if (user) {
         authDiv.innerHTML = `
           <div class="auth-header">
             <div class="user-profile-badge">
-              <div class="avatar">${user.name.charAt(0).toUpperCase()}</div>
+              <div class="avatar">${user.name ? user.name.charAt(0).toUpperCase() : 'S'}</div>
               <div>
                 <strong style="font-size:0.95rem;">${user.name}</strong>
                 <div style="font-size:0.75rem; color: var(--text-muted);">${user.email} • 🎓 ${user.campus}</div>
@@ -749,18 +778,18 @@
         email: document.getElementById('loginEmail').value,
         campus: document.getElementById('loginCampus').value
       };
-      localStorage.setItem('sd_user', JSON.stringify(user));
+      setStorage('sd_user', user);
       renderAuthSection();
     }
 
     function logoutUser() {
-      localStorage.removeItem('sd_user');
+      removeStorage('sd_user');
       renderAuthSection();
     }
 
     function handleHubSubmission(e, type) {
       e.preventDefault();
-      const user = JSON.parse(localStorage.getItem('sd_user')) || { name: 'Guest Student', campus: 'General' };
+      const user = getStorage('sd_user') || { name: 'Guest Student', campus: 'General' };
       
       let title = '';
       let details = '';
@@ -784,13 +813,21 @@
         status: 'RECEIVED'
       };
 
-      const history = JSON.parse(localStorage.getItem('sd_tickets')) || [];
+      const history = getStorage('sd_tickets') || [];
       history.unshift(newTicket);
-      localStorage.setItem('sd_tickets', JSON.stringify(history));
+      setStorage('sd_tickets', history);
 
-      const phone = "27698440391";
-      const text = encodeURIComponent(`Hi Mapha Deals!\n\nNew ${type} from ${user.name} (${user.campus}):\n\n*Subject:* ${title}\n*Details:* ${details}`);
-      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+      const messageText = 
+`Hi Mapha Deals! 🚀
+
+New ${type} from ${user.name} (${user.campus}):
+• *Subject:* ${title}
+• *Details:* ${details}`;
+
+      const targetPhone = getWaTarget();
+      const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(messageText)}`;
+
+      window.open(url, '_blank');
 
       e.target.reset();
       renderUserHistory();
@@ -799,7 +836,9 @@
 
     function renderUserHistory() {
       const historyList = document.getElementById('userHistoryList');
-      const tickets = JSON.parse(localStorage.getItem('sd_tickets')) || [];
+      if (!historyList) return;
+
+      const tickets = getStorage('sd_tickets') || [];
 
       if (tickets.length === 0) {
         historyList.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px 0;">No saved requests or tickets yet. Login and submit a request above to save info to your device!</div>`;
@@ -958,7 +997,7 @@
               <div class="price-row">
                 <span class="current-price">${displayPrice}</span>
                 ${displayOldPrice ? `<span class="old-price">${displayOldPrice}</span>` : ''}
-                ${deal.hasGuide ? `<span class="info-btn">How To Get ➔</span>` : ''}
+                ${isClickable ? `<span class="info-btn">How To Get ➔</span>` : ''}
               </div>
             </div>
           </div>
@@ -1000,9 +1039,19 @@
       const deal = deals.find(d => d.id === id);
       if (!deal) return;
 
-      if (deal.tcLink) {
-        document.getElementById('guideTcBtn').href = deal.tcLink;
+      const titleEl = document.getElementById('guideTitle');
+      const tcBtn = document.getElementById('guideTcBtn');
+
+      if (titleEl) titleEl.innerText = `${deal.merchant} Offer Details`;
+      if (tcBtn) {
+        if (deal.tcLink) {
+          tcBtn.href = deal.tcLink;
+          tcBtn.style.display = 'inline-block';
+        } else {
+          tcBtn.style.display = 'none';
+        }
       }
+
       toggleGuideModal(true);
     }
 
@@ -1016,43 +1065,37 @@
 
     function handleFormSubmit(e) {
       e.preventDefault();
+      
       const biz = document.getElementById('bizName').value;
       const title = document.getElementById('dealTitle').value;
       const category = document.getElementById('dealCategory').value;
       const city = document.getElementById('dealCity').value;
       const price = parseFloat(document.getElementById('dealPrice').value);
       const oldPrice = parseFloat(document.getElementById('dealOldPrice').value);
-      const customImg = document.getElementById('dealImage').value;
 
-      const pct = Math.round(((oldPrice - price) / oldPrice) * 100);
+      const messageText = 
+`Hi Mapha Deals! 🚀
 
-      const newDeal = {
-        id: deals.length + 1,
-        title: title,
-        merchant: biz,
-        category: category,
-        city: city,
-        price: price,
-        oldPrice: oldPrice,
-        discount: `-${pct}%`,
-        lat: -33.98,
-        lng: 25.65,
-        img: customImg || fallbackImg
-      };
+I'd like to list my deal:
+• *Business:* ${biz}
+• *Deal:* ${title}
+• *Category:* ${category}
+• *City:* ${city}
+• *Price:* R${price} (Was R${oldPrice})
 
-      deals.unshift(newDeal);
-      filterDeals();
+Please send PayShap / bank payment details to activate my R50 listing!`;
 
-      const phone = "27698440391";
-      const text = encodeURIComponent(`Hi Mapha Deals! 🚀\n\nI'd like to list my deal:\n• Business: ${biz}\n• Deal: ${title}\n• City: ${city}\n• Price: R${price} (Was R${oldPrice})\n\nPlease send bank / EFT payment details to activate my R50 listing!`);
+      const targetPhone = getWaTarget();
+      const url = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(messageText)}`;
       
-      window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+      window.open(url, '_blank');
       document.getElementById('dealForm').reset();
       toggleModal(false);
     }
 
-    // Initial Load
+    // Initial Page Execution
     renderDeals(deals);
+    renderAuthSection();
   </script>
 </body>
-</html>
+            </html>
